@@ -1,7 +1,8 @@
 from pathlib import Path
 import sys
-from PySide6.QtWidgets import QDialog, QHBoxLayout, QLabel, QLayout, QLineEdit, QMainWindow, QApplication, QMessageBox, QToolBar, QVBoxLayout, QWidget, QSizePolicy
+from PySide6.QtWidgets import QDialog, QDialogButtonBox, QHBoxLayout, QLabel, QLayout, QLineEdit, QMainWindow, QApplication, QMessageBox, QToolBar, QVBoxLayout, QWidget, QSizePolicy
 from PySide6.QtGui import QIcon, QPixmap, QValidator, Qt
+from PySide6.QtCore import Signal, SignalInstance
 
 from User import User
 
@@ -22,12 +23,16 @@ def layoutToWidget(layout):
     return wd
 
 class InputLabel(QLabel):
+    validationChanged = Signal() 
+
     def __init__(self, name, validator, placeHolder: str | None = None):
         super().__init__()
         self.setMinimumSize(200, 40)
         self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
 
         self.validator = validator
+        self._valid = False
+
 
         line = QHBoxLayout()
         label = QLabel(name)
@@ -41,13 +46,18 @@ class InputLabel(QLabel):
         
         inputLine.textChanged.connect(self.validate)
 
+
         self.setLayout(line)
 
     def validate(self):
-        self._valid = self.validator(self.inputLine.text())
+        newValid = self.validator(self.inputLine.text())
+        if self._valid != newValid:
+            self._valid = newValid
+            self.validationChanged.emit()
 
     def isValid(self):
         return self._valid
+
 
 
 
@@ -78,8 +88,6 @@ class MainWindow(QMainWindow):
         layout.addStretch()
         self.setCentralWidget(layoutToWidget(layout))
 
-        
-
     def buildMenu(self):
         menu = self.menuBar()
         menu.addMenu("Fichero").addAction("Salir", self.close)
@@ -96,13 +104,29 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout()
         dialog.setWindowTitle("Añadir nuevo usuario")
 
-        
-        layout.addWidget(InputLabel("Nombre", "nameInput"))
-        layout.addWidget(InputLabel("Teléfono", "phoneInput"))
-        layout.addWidget(InputLabel("Correo", "mailInput"))
+        Inputs = [
+            InputLabel("Nombre", lambda name: len(name) > 0),
+            InputLabel("Teléfono", lambda phone: len(phone) == 9 and phone.isdigit()),
+            InputLabel("Correo", lambda mail: "@" in mail and "." in mail)
+        ]
 
-        #layout.addStretch()
+        for inpt in Inputs:
+            layout.addWidget(inpt)
+
+        layout.addStretch()
+
+        btnAcceptance = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        layout.addWidget(btnAcceptance)
+
+        okBtn = btnAcceptance.button(QDialogButtonBox.StandardButton.Ok)
+        cancelBtn = btnAcceptance.button(QDialogButtonBox.StandardButton.Cancel)
+
+        for inpt in Inputs:
+            inpt.validationChanged.connect(lambda: okBtn.setEnabled(all(inpt.isValid() for inpt in Inputs)))
         
+        okBtn.setEnabled(all(inpt.isValid() for inpt in Inputs))
+        cancelBtn.clicked.connect(dialog.reject)
+    
         dialog.setLayout(layout)
         dialog.exec()
 
