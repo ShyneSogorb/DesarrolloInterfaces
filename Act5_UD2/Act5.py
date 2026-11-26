@@ -208,7 +208,7 @@ class MainWindow(QMainWindow):
         for inpt in Inputs:
             inpt.validationChanged.connect(updateOkEnable)
 
-        okBtn.clicked.connect(dialog.accept)
+       # Conecta los botones de ok y cancel con la aceptación y rechazo del diálogo y establece el estado de disponibilidad del botón ok okBtn.clicked.connect(dialog.accept)
         updateOkEnable()
         cancelBtn.clicked.connect(dialog.reject)
     
@@ -218,6 +218,7 @@ class MainWindow(QMainWindow):
 
         dialog.exec()
 
+    #Inserta un nuevo usuario a la lista y actualiza la vista, el estado y las últimas acciones
     def insertNewContact(self, user: User):
         self.contacts.append(user)
         self.updateStatusBar(f"Nuevo usuario añadido ({user})")
@@ -226,7 +227,7 @@ class MainWindow(QMainWindow):
         label.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self.mainLayout.insertWidget(len(self.contacts) - 1, label)
 
-
+    # Muestra el diálogo para eliminar un usuario de la lista
     def removeContact(self):
         dialog = QDialog(self, "Eliminar usuario")
 
@@ -246,7 +247,7 @@ class MainWindow(QMainWindow):
         updateOkEnable = lambda: okBtn.setEnabled(inpt.isValid())
 
         inpt.validationChanged.connect(updateOkEnable)
-
+        #crea la ventana de confirmación de eliminación del usuario
         def ensureDeleition():
             ensureDialog = createDialog(self, "Warning")
             ensureBtns, sureBtn, cancel = createBtnDialog(QDialogButtonBox.StandardButton.Ok, QDialogButtonBox.StandardButton.Cancel)
@@ -268,6 +269,7 @@ class MainWindow(QMainWindow):
 
         dialog.exec()
 
+    # Elimina el contacto desde su id junto con su elemento widget y actualiza la información de movimiento y statusBar
     def removeExistingContact(self, id):
         findIndex = -1
         for findIndex, user in enumerate(self.contacts):
@@ -282,10 +284,12 @@ class MainWindow(QMainWindow):
         self.updateStatusBar(f"Usuario {deletedUser} eliminado")
         self.updateLastActions("Usuario eliminado", deletedUser.format())
 
+    # Crees un diálogo de texto con información de la aplicación
     def displayInfo(self):
         msg = QMessageBox(QMessageBox.Icon.Information, "Information", "Información de la aplicación")
         msg.exec()
 
+    #Crea y asigna la barra de herramientas
     def buildTools(self):
         tools = QToolBar()
 
@@ -295,6 +299,7 @@ class MainWindow(QMainWindow):
 
         self.addToolBar(tools)
 
+    #Crea y asigna el statusBar de la aplicación 
     def buildStatusBar(self):
         self.estado = statusBar = QStatusBar()
         self.setStatusBar(statusBar)
@@ -303,6 +308,7 @@ class MainWindow(QMainWindow):
         statusBar.addWidget(label)
         self.updateStatusBar()
 
+    #actualiza el statusBar con la cantidad de contactos existentes y opcionalmente un mensaje temporal
     def updateStatusBar(self, msg: str | None = None):
         if not hasattr(self, "statusBarLabel"): return
 
@@ -310,6 +316,7 @@ class MainWindow(QMainWindow):
         if msg:
             self.statusBar().showMessage(msg, 5000)
 
+    #Construye el dock flotante para la aplicación
     def buildDock(self):
         self.dock = dock = QDockWidget(self)
         layout = QVBoxLayout()
@@ -328,6 +335,7 @@ class MainWindow(QMainWindow):
 
         dock.setWidget(layoutToWidget(layout))
 
+    #actualiza la información del dock con la nueva acción y modificación realizadas
     def updateLastActions(self, action, modified):
         if not hasattr(self, "lastAction"): return
 
@@ -336,8 +344,13 @@ class MainWindow(QMainWindow):
 
 
         
+#equivalente a void main
 if __name__ == "__main__":
+    #Crea la aplicación con los argumentos de entrada
     app = QApplication(sys.argv)
+    #Crea la ventana principal
     window = MainWindow()
+    #Muestra la ventana recién creada
     window.show()
+    #acaba el script junto a la app su mismo código de salida
     sys.exit(app.exec())
